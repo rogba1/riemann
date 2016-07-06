@@ -29,3 +29,8 @@
                     :metric (float (:metric mean-event))
                     :state "alert"})
             (call-rescue children))))))
+
+(moving-time-window 600
+  (overshoot-by-ratio 1000 0.5
+    #(info %)
+    (email "sysops@sky.uk")))

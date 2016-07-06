@@ -1,0 +1,6 @@
+(streams 
+   (where (service #"cpu-[0-9]+ ")
+     (adjust [:service (fn [service] 
+                         (str "cpu-average "
+                              (second (clojure.string/split service #"cpu-[0-9]+ "))))]
+       (by [:host :service]  ...  )))

@@ -1,0 +1,7 @@
+(stream
+  (moving-time-window 600 ; 600 sec = 10 min
+    (folds/mean
+      (graphite))
+    (folds/median
+      (while (> metric 1000)
+        (email "sysops@sky.uk")))))

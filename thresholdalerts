@@ -1,0 +1,31 @@
+(defn overshoot-by-ratio
+  "Takes a list of event, emit an event if the overshoot events is over the ratio.
+   The emitted event will contain a description of the overshoot threshold and the ratio;
+   the metric of the emitted event will be the median of overshoot events. Example:
+
+   (moving-time-window 300        ; 5 min
+     (overshoot-by-ratio 1500 0.2 ; if the ratio of metrics which more than 1500
+                                  ; is larger than 0.2, the below would be called
+       (throttle 1 500
+         (email \"ops@my.company.com\"))))"
+  [threshold ratio & children]
+  (fn [events]
+    (let [over (->> events
+                    (filter (comp identity :metric))
+                    (filter #(> (:metric %) threshold)))
+          err (filter #(nil? (re-matches #"ok.*" (:state %)))
+                      events)
+          over-ratio (-> (count over)
+                         (+ (count err))
+                         (/ (count events))
+                         (float))
+          mean-event (folds/mean over)]
+      (when (> over-ratio ratio)
+        (info "err events: " err)
+        (-> mean-event
+            (merge {:description
+                    (str "overshoot threshold " threshold
+                         " for ratio " over-ratio)
+                    :metric (float (:metric mean-event))
+                    :state "alert"})
+            (call-rescue children))))))
